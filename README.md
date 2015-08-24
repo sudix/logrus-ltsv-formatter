@@ -9,7 +9,7 @@ Install
 ====================
 
 ```
-$ go get go get github.com/sudix/logrus-ltsv-formatter
+$ go get github.com/sudix/logrus-ltsv-formatter
 ```
 
 Usage
