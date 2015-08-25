@@ -48,7 +48,7 @@ func (f *LogrusLTSVFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	)
 
 	for _, k := range keys {
-		fmt.Fprintf(buf, "field.%s:%v\t", k, entry.Data[string(k)])
+		fmt.Fprintf(buf, "field.%s:%v\t", k, entry.Data[k])
 	}
 
 	fmt.Fprintf(buf, "msg:%s\n", entry.Message)
