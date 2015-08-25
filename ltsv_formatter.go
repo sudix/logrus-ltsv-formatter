@@ -40,17 +40,18 @@ func (f *LogrusLTSVFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		timestampFormat = logrus.DefaultTimestampFormat
 	}
 
-	buf.WriteString(fmt.Sprintf(
+	fmt.Fprintf(
+		buf,
 		"time:%s\tlevel:%s\t",
 		entry.Time.Format(timestampFormat),
 		entry.Level.String(),
-	))
+	)
 
 	for _, k := range keys {
-		buf.WriteString(fmt.Sprintf("field.%s:%v\t", k, entry.Data[string(k)]))
+		fmt.Fprintf(buf, "field.%s:%v\t", k, entry.Data[string(k)])
 	}
 
-	buf.WriteString(fmt.Sprintf("msg:%s\n", entry.Message))
+	fmt.Fprintf(buf, "msg:%s\n", entry.Message)
 
 	return buf.Bytes(), nil
 }
