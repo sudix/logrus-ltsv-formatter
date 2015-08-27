@@ -25,8 +25,8 @@ import (
 	"github.com/sudix/logrus-ltsv-formatter"
 )
 
-func ExampleNew() {
-	formatter := logrusltsv.New()
+func ExampleNewDefaultFormatter() {
+	formatter := logrusltsv.NewDefaultFormatter()
 	out := &bytes.Buffer{}
 
 	logrus.SetFormatter(formatter)
@@ -47,11 +47,18 @@ func ExampleNew() {
 }
 ```
 
-You can specify timestamp format.
+You can specify configuration.
 
 ```golang
-func ExampleNewWithTimestampFormat() {
-	formatter := logrusltsv.NewWithTimestampFormat("2006/01/02 15:04:05 JST")
+func ExampleNewFormatter() {
+	formatter := logrusltsv.NewFormatter(
+		logrusltsv.LogrusLTSVConfig{
+			TimestampFormat: "2006/01/02 15:04:05 JST",
+			FieldPrefix:     "prefix_",
+			Filters:         []Filter{EscapeNewLine},
+		},
+	)
+
 	out := &bytes.Buffer{}
 
 	logrus.SetFormatter(formatter)
@@ -71,3 +78,12 @@ func ExampleNewWithTimestampFormat() {
 	fmt.Println(out)
 }
 ```
+
+Configuration
+====================
+
+`LogrusLTSVConfig` has three fields.
+
+* `TimestampFormat` - Timestamp Format to apply `time.Time` type.
+* `FieldPrefix` - The prefix string that attached before filed key name.
+* `Filters` - Filter functions that applys field values. Filter functions have to satisfy `logrusltsv.Filter` type.

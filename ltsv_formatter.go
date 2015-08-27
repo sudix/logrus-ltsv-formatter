@@ -4,6 +4,7 @@ package logrusltsv
 import (
 	"bytes"
 	"fmt"
+	"regexp"
 	"sort"
 	"time"
 
@@ -11,19 +12,38 @@ import (
 )
 
 type LogrusLTSVFormatter struct {
+	conf LogrusLTSVConfig
+}
+
+type LogrusLTSVConfig struct {
 	TimestampFormat string
+	FieldPrefix     string
+	Filters         []Filter
 }
 
-// New create LogrusLTSVFormatter.
-func New() *LogrusLTSVFormatter {
-	return new(LogrusLTSVFormatter)
+type Filter func(string) string
+
+var reNL = regexp.MustCompile(`\n`)
+
+func EscapeNewLine(s string) string {
+	return reNL.ReplaceAllString(s, " ")
 }
 
-// NewWithTimestampFormat create LogrusLTSVFormatter
-// with timestamp format.
-func NewWithTimestampFormat(timestampFormat string) *LogrusLTSVFormatter {
+// NewDefaultFormatter create LogrusLTSVFormatter with default configuration.
+func NewDefaultFormatter() *LogrusLTSVFormatter {
+	c := LogrusLTSVConfig{
+		TimestampFormat: logrus.DefaultTimestampFormat,
+		FieldPrefix:     "field.",
+		Filters:         []Filter{EscapeNewLine},
+	}
+	return NewFormatter(c)
+}
+
+// NewFormatter create LogrusLTSVFormatter
+// with given configuration.
+func NewFormatter(config LogrusLTSVConfig) *LogrusLTSVFormatter {
 	return &LogrusLTSVFormatter{
-		TimestampFormat: timestampFormat,
+		conf: config,
 	}
 }
 
@@ -36,7 +56,7 @@ func (f *LogrusLTSVFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 
 	buf := &bytes.Buffer{}
 
-	timestampFormat := f.TimestampFormat
+	timestampFormat := f.conf.TimestampFormat
 	if timestampFormat == "" {
 		timestampFormat = logrus.DefaultTimestampFormat
 	}
@@ -48,13 +68,22 @@ func (f *LogrusLTSVFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		entry.Level.String(),
 	)
 
+	var val string
 	for _, k := range keys {
 		switch v := entry.Data[k].(type) {
+		case string:
+			val = v
 		case time.Time:
-			fmt.Fprintf(buf, "field.%s:%s\t", k, v.Format(timestampFormat))
+			val = v.Format(timestampFormat)
 		default:
-			fmt.Fprintf(buf, "field.%s:%v\t", k, v)
+			val = fmt.Sprintf("%v", v)
 		}
+
+		for _, filter := range f.conf.Filters {
+			val = filter(val)
+		}
+
+		fmt.Fprintf(buf, "%s%s:%s\t", f.conf.FieldPrefix, k, val)
 	}
 
 	fmt.Fprintf(buf, "msg:%s\n", entry.Message)

@@ -10,10 +10,10 @@ import (
 	"github.com/sudix/logrus-ltsv-formatter"
 )
 
-func TestFormat(t *testing.T) {
+func TestNewDefaultFormatter(t *testing.T) {
 	out := &bytes.Buffer{}
 
-	logrus.SetFormatter(logrusltsv.New())
+	logrus.SetFormatter(logrusltsv.NewDefaultFormatter())
 	logrus.SetOutput(out)
 	logrus.SetLevel(logrus.DebugLevel)
 
@@ -24,10 +24,13 @@ func TestFormat(t *testing.T) {
 		"booleanKey": true,
 		"numberKey":  122,
 		"msg":        "msg 1",
-		"timeKey":    now,
+		"newline": `aaaaa
+bbbbb
+ccccc`,
+		"timeKey": now,
 	}).Debug("test message 1")
 
-	expectedPattern := "time:[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\+[0-9]{2}:[0-9]{2}\tlevel:debug\tfield.booleanKey:true\tfield.msg:msg 1\tfield.numberKey:122\tfield.stringKey:foo\tfield.timeKey:[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\+[0-9]{2}:[0-9]{2}\tmsg:test message 1\n"
+	expectedPattern := "time:[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\+[0-9]{2}:[0-9]{2}\tlevel:debug\tfield.booleanKey:true\tfield.msg:msg 1\tfield.newline:aaaaa bbbbb ccccc\tfield.numberKey:122\tfield.stringKey:foo\tfield.timeKey:[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\+[0-9]{2}:[0-9]{2}\tmsg:test message 1\n"
 	actual := out.String()
 	expected := regexp.MustCompile(expectedPattern)
 	if !expected.MatchString(actual) {
@@ -35,11 +38,17 @@ func TestFormat(t *testing.T) {
 	}
 }
 
-func TestFormatWithTimestampFormat(t *testing.T) {
+func TestNewFormatter(t *testing.T) {
 	out := &bytes.Buffer{}
 
 	timestampFormat := "2006/01/02 15:04:05 JST"
-	logrus.SetFormatter(logrusltsv.NewWithTimestampFormat(timestampFormat))
+
+	c := logrusltsv.LogrusLTSVConfig{
+		TimestampFormat: timestampFormat,
+		FieldPrefix:     "prefix_",
+	}
+
+	logrus.SetFormatter(logrusltsv.NewFormatter(c))
 	logrus.SetOutput(out)
 	logrus.SetLevel(logrus.DebugLevel)
 
@@ -53,7 +62,7 @@ func TestFormatWithTimestampFormat(t *testing.T) {
 		"timeKey":    now,
 	}).Debug("test message 1")
 
-	expectedPattern := "time:[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} JST\tlevel:debug\tfield.booleanKey:true\tfield.msg:msg 1\tfield.numberKey:122\tfield.stringKey:foo\tfield.timeKey:" + now.Format(timestampFormat) + "\tmsg:test message 1\n"
+	expectedPattern := "time:[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} JST\tlevel:debug\tprefix_booleanKey:true\tprefix_msg:msg 1\tprefix_numberKey:122\tprefix_stringKey:foo\tprefix_timeKey:" + now.Format(timestampFormat) + "\tmsg:test message 1\n"
 	actual := out.String()
 	expected := regexp.MustCompile(expectedPattern)
 	if !expected.MatchString(actual) {
@@ -70,7 +79,7 @@ func (w *dummyWriter) Write(p []byte) (n int, err error) {
 func BenchmarkFormat(b *testing.B) {
 	out := &dummyWriter{}
 
-	logrus.SetFormatter(logrusltsv.New())
+	logrus.SetFormatter(logrusltsv.NewDefaultFormatter())
 	logrus.SetOutput(out)
 	logrus.SetLevel(logrus.DebugLevel)
 
