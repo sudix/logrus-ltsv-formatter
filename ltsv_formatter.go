@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 )
@@ -48,7 +49,12 @@ func (f *LogrusLTSVFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	)
 
 	for _, k := range keys {
-		fmt.Fprintf(buf, "field.%s:%v\t", k, entry.Data[k])
+		switch v := entry.Data[k].(type) {
+		case time.Time:
+			fmt.Fprintf(buf, "field.%s:%s\t", k, v.Format(timestampFormat))
+		default:
+			fmt.Fprintf(buf, "field.%s:%v\t", k, v)
+		}
 	}
 
 	fmt.Fprintf(buf, "msg:%s\n", entry.Message)

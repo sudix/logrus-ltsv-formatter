@@ -17,7 +17,7 @@ func TestFormat(t *testing.T) {
 	logrus.SetOutput(out)
 	logrus.SetLevel(logrus.DebugLevel)
 
-	now := time.Now().Format(time.RFC850)
+	now := time.Now()
 
 	logrus.WithFields(logrus.Fields{
 		"stringKey":  "foo",
@@ -27,7 +27,7 @@ func TestFormat(t *testing.T) {
 		"timeKey":    now,
 	}).Debug("test message 1")
 
-	expectedPattern := "time:[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\+[0-9]{2}:[0-9]{2}\tlevel:debug\tfield.booleanKey:true\tfield.msg:msg 1\tfield.numberKey:122\tfield.stringKey:foo\tfield.timeKey:" + now + "\tmsg:test message 1\n"
+	expectedPattern := "time:[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\+[0-9]{2}:[0-9]{2}\tlevel:debug\tfield.booleanKey:true\tfield.msg:msg 1\tfield.numberKey:122\tfield.stringKey:foo\tfield.timeKey:[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\+[0-9]{2}:[0-9]{2}\tmsg:test message 1\n"
 	actual := out.String()
 	expected := regexp.MustCompile(expectedPattern)
 	if !expected.MatchString(actual) {
@@ -38,11 +38,12 @@ func TestFormat(t *testing.T) {
 func TestFormatWithTimestampFormat(t *testing.T) {
 	out := &bytes.Buffer{}
 
-	logrus.SetFormatter(logrusltsv.NewWithTimestampFormat("2006/01/02 15:04:05 JST"))
+	timestampFormat := "2006/01/02 15:04:05 JST"
+	logrus.SetFormatter(logrusltsv.NewWithTimestampFormat(timestampFormat))
 	logrus.SetOutput(out)
 	logrus.SetLevel(logrus.DebugLevel)
 
-	now := time.Now().Format(time.RFC850)
+	now := time.Now()
 
 	logrus.WithFields(logrus.Fields{
 		"stringKey":  "foo",
@@ -52,7 +53,7 @@ func TestFormatWithTimestampFormat(t *testing.T) {
 		"timeKey":    now,
 	}).Debug("test message 1")
 
-	expectedPattern := "time:[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} JST\tlevel:debug\tfield.booleanKey:true\tfield.msg:msg 1\tfield.numberKey:122\tfield.stringKey:foo\tfield.timeKey:" + now + "\tmsg:test message 1\n"
+	expectedPattern := "time:[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} JST\tlevel:debug\tfield.booleanKey:true\tfield.msg:msg 1\tfield.numberKey:122\tfield.stringKey:foo\tfield.timeKey:" + now.Format(timestampFormat) + "\tmsg:test message 1\n"
 	actual := out.String()
 	expected := regexp.MustCompile(expectedPattern)
 	if !expected.MatchString(actual) {
@@ -73,7 +74,7 @@ func BenchmarkFormat(b *testing.B) {
 	logrus.SetOutput(out)
 	logrus.SetLevel(logrus.DebugLevel)
 
-	now := time.Now().Format(time.RFC850)
+	now := time.Now()
 
 	for i := 0; i < b.N; i++ {
 		logrus.WithFields(logrus.Fields{
