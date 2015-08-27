@@ -11,19 +11,28 @@ import (
 )
 
 type LogrusLTSVFormatter struct {
+	conf LogrusLTSVConfig
+}
+
+type LogrusLTSVConfig struct {
 	TimestampFormat string
+	FieldPrefix     string
 }
 
 // New create LogrusLTSVFormatter.
-func New() *LogrusLTSVFormatter {
-	return new(LogrusLTSVFormatter)
+func NewDefaultFormatter() *LogrusLTSVFormatter {
+	c := LogrusLTSVConfig{
+		TimestampFormat: logrus.DefaultTimestampFormat,
+		FieldPrefix:     "field.",
+	}
+	return NewFormatter(c)
 }
 
 // NewWithTimestampFormat create LogrusLTSVFormatter
 // with timestamp format.
-func NewWithTimestampFormat(timestampFormat string) *LogrusLTSVFormatter {
+func NewFormatter(config LogrusLTSVConfig) *LogrusLTSVFormatter {
 	return &LogrusLTSVFormatter{
-		TimestampFormat: timestampFormat,
+		conf: config,
 	}
 }
 
@@ -36,7 +45,7 @@ func (f *LogrusLTSVFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 
 	buf := &bytes.Buffer{}
 
-	timestampFormat := f.TimestampFormat
+	timestampFormat := f.conf.TimestampFormat
 	if timestampFormat == "" {
 		timestampFormat = logrus.DefaultTimestampFormat
 	}
@@ -51,9 +60,9 @@ func (f *LogrusLTSVFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	for _, k := range keys {
 		switch v := entry.Data[k].(type) {
 		case time.Time:
-			fmt.Fprintf(buf, "field.%s:%s\t", k, v.Format(timestampFormat))
+			fmt.Fprintf(buf, "%s%s:%s\t", f.conf.FieldPrefix, k, v.Format(timestampFormat))
 		default:
-			fmt.Fprintf(buf, "field.%s:%v\t", k, v)
+			fmt.Fprintf(buf, "%s%s:%v\t", f.conf.FieldPrefix, k, v)
 		}
 	}
 

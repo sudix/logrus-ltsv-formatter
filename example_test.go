@@ -9,8 +9,8 @@ import (
 	"github.com/sudix/logrus-ltsv-formatter"
 )
 
-func ExampleNew() {
-	formatter := logrusltsv.New()
+func ExampleNewDefaultFormatter() {
+	formatter := logrusltsv.NewDefaultFormatter()
 	out := &bytes.Buffer{}
 
 	logrus.SetFormatter(formatter)
@@ -30,8 +30,14 @@ func ExampleNew() {
 	fmt.Println(out)
 }
 
-func ExampleNewWithTimestampFormat() {
-	formatter := logrusltsv.NewWithTimestampFormat("2006/01/02 15:04:05 JST")
+func ExampleNewFormatter() {
+	formatter := logrusltsv.NewFormatter(
+		logrusltsv.LogrusLTSVConfig{
+			TimestampFormat: "2006/01/02 15:04:05 JST",
+			FieldPrefix:     "prefix_",
+		},
+	)
+
 	out := &bytes.Buffer{}
 
 	logrus.SetFormatter(formatter)
