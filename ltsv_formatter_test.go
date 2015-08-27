@@ -24,10 +24,13 @@ func TestNewDefaultFormatter(t *testing.T) {
 		"booleanKey": true,
 		"numberKey":  122,
 		"msg":        "msg 1",
-		"timeKey":    now,
+		"newline": `aaaaa
+bbbbb
+ccccc`,
+		"timeKey": now,
 	}).Debug("test message 1")
 
-	expectedPattern := "time:[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\+[0-9]{2}:[0-9]{2}\tlevel:debug\tfield.booleanKey:true\tfield.msg:msg 1\tfield.numberKey:122\tfield.stringKey:foo\tfield.timeKey:[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\+[0-9]{2}:[0-9]{2}\tmsg:test message 1\n"
+	expectedPattern := "time:[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\+[0-9]{2}:[0-9]{2}\tlevel:debug\tfield.booleanKey:true\tfield.msg:msg 1\tfield.newline:aaaaa bbbbb ccccc\tfield.numberKey:122\tfield.stringKey:foo\tfield.timeKey:[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\+[0-9]{2}:[0-9]{2}\tmsg:test message 1\n"
 	actual := out.String()
 	expected := regexp.MustCompile(expectedPattern)
 	if !expected.MatchString(actual) {

@@ -4,6 +4,7 @@ package logrusltsv
 import (
 	"bytes"
 	"fmt"
+	"regexp"
 	"sort"
 	"time"
 
@@ -17,19 +18,29 @@ type LogrusLTSVFormatter struct {
 type LogrusLTSVConfig struct {
 	TimestampFormat string
 	FieldPrefix     string
+	Filters         []Filter
 }
 
-// New create LogrusLTSVFormatter.
+type Filter func(string) string
+
+var reNL = regexp.MustCompile(`\n`)
+
+func EscapeNewLine(s string) string {
+	return reNL.ReplaceAllString(s, " ")
+}
+
+// NewDefaultFormatter create LogrusLTSVFormatter with default configuration.
 func NewDefaultFormatter() *LogrusLTSVFormatter {
 	c := LogrusLTSVConfig{
 		TimestampFormat: logrus.DefaultTimestampFormat,
 		FieldPrefix:     "field.",
+		Filters:         []Filter{EscapeNewLine},
 	}
 	return NewFormatter(c)
 }
 
-// NewWithTimestampFormat create LogrusLTSVFormatter
-// with timestamp format.
+// NewFormatter create LogrusLTSVFormatter
+// with given configuration.
 func NewFormatter(config LogrusLTSVConfig) *LogrusLTSVFormatter {
 	return &LogrusLTSVFormatter{
 		conf: config,
@@ -57,13 +68,22 @@ func (f *LogrusLTSVFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		entry.Level.String(),
 	)
 
+	var val string
 	for _, k := range keys {
 		switch v := entry.Data[k].(type) {
+		case string:
+			val = v
 		case time.Time:
-			fmt.Fprintf(buf, "%s%s:%s\t", f.conf.FieldPrefix, k, v.Format(timestampFormat))
+			val = v.Format(timestampFormat)
 		default:
-			fmt.Fprintf(buf, "%s%s:%v\t", f.conf.FieldPrefix, k, v)
+			val = fmt.Sprintf("%v", v)
 		}
+
+		for _, filter := range f.conf.Filters {
+			val = filter(val)
+		}
+
+		fmt.Fprintf(buf, "%s%s:%s\t", f.conf.FieldPrefix, k, val)
 	}
 
 	fmt.Fprintf(buf, "msg:%s\n", entry.Message)
