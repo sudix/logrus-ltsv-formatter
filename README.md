@@ -85,5 +85,5 @@ Configuration
 `LogrusLTSVConfig` has three fields.
 
 * `TimestampFormat` - Timestamp Format to apply `time.Time` type.
-* `FieldPrefix` - The prefix string that attached before filed key name.
-* `Filters` - Filter functions that applys field values. Filter functions have to satisfy `logrusltsv.Filter` type.
+* `FieldPrefix` - The prefix string that attached before field key name.
+* `Filters` - Filter functions that applies field values. Filter functions have to satisfy `logrusltsv.Filter` type. They are applied in declaration order. (Caution! Heavy process filter may cause performance issue.)
