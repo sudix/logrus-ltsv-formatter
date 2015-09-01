@@ -47,6 +47,14 @@ func NewFormatter(config LogrusLTSVConfig) *LogrusLTSVFormatter {
 	}
 }
 
+func (f *LogrusLTSVFormatter) filtering(val string) string {
+	s := val
+	for _, filter := range f.conf.Filters {
+		s = filter(s)
+	}
+	return s
+}
+
 func (f *LogrusLTSVFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	var keys []string
 	for k, _ := range entry.Data {
@@ -79,14 +87,12 @@ func (f *LogrusLTSVFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 			val = fmt.Sprintf("%v", v)
 		}
 
-		for _, filter := range f.conf.Filters {
-			val = filter(val)
-		}
+		val = f.filtering(val)
 
 		fmt.Fprintf(buf, "%s%s:%s\t", f.conf.FieldPrefix, k, val)
 	}
 
-	fmt.Fprintf(buf, "msg:%s\n", entry.Message)
+	fmt.Fprintf(buf, "msg:%s\n", f.filtering(entry.Message))
 
 	return buf.Bytes(), nil
 }
